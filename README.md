@@ -21,8 +21,9 @@ To use this project you need to:
 
 * Have ServiceNow instance.
 * Have Installed on the instance the Terraform Cloud ServiceNow application.
-* Fork this repository or have a repository with appropriate Terraform configuration. The guide assumes you are using a fork/copy of this repo.
-* Have the repository containing the Terraform Code added to the Terraform ServiceNOW application. Help on that can be found in the [documentation](https://www.terraform.io/docs/cloud/integrations/service-now/service-catalog.html#configure-vcs-repositories).
+* Fork this repository or have a repository with appropriate Terraform configuration added to the Terraform ServiceNOW application. Help on that can be found in the [documentation](https://www.terraform.io/docs/cloud/integrations/service-now/service-catalog.html#configure-vcs-repositories). The guide assumes you are using a fork/copy of this repo.
+
+Take a look at the Terraform configuration in the repo so that you will have a general idea what variables it needs set and what it will do.
 
 ## ServiceNOW configuration
 
@@ -34,7 +35,7 @@ To open the ServiceNOW Studio search for `studio` in the menus on the left side.
 
 ### Create a new Variable Set
 
-The variable set will contain all the variables that need to be passed to the ServiceNOW flow for it to use. In our case it will contain the Terraform and Environment variables that would need to be set in the Terraform Cloud workspace created by ServiceNOW.
+The variable set will contain all the variables that need to be passed to the ServiceNOW flow for it to use. In our case it will contain the Terraform and Environment variables that would need to be set in the Terraform Cloud workspace created by ServiceNOW. It is recommended to read the section to the end before proceeding with the steps for creating the variables.
 
 * In the ServiceNOW Studio click on `Create New` item, choose Variable Set type and click on `Create`.
 
@@ -44,7 +45,7 @@ The variable set will contain all the variables that need to be passed to the Se
 
   ![](images/snow-studio-variableset-create-2.png)
 
-* Fill out the `Name`, `Internal name` and optionally the `Description` fields and click on `Create`.
+* Fill out the `Title`, `Internal name` and optionally the `Description` fields and click on `Submit`.
   
   ![](images/snow-studio-variableset-create-3.png)
 
@@ -63,10 +64,10 @@ At this point there is a Variable Set that will hold the variables that ServiceN
 
   * The `Question` will contain what the user will see in the ServiceNOW catalog when asked to provide a value.
   * The `Name` must be derived from the actual terraform variable for which the value is being set as described [here](https://www.terraform.io/docs/cloud/integrations/service-now/developer-reference.html#terraform-variables-and-servicenow-variable-sets). To provide a value for an HCL Terraform variable the prefix `tf_var_hcl_` must be used.
-  * (Optional) Can also provide an example value for variables in the `Example Text` field. This is useful when the variable is a more complex `HCL` string e.g. the value for the `private_subnet_cidrs` would be something like `[{cidr = "172.30.2.0/24", az_index = 0}, {cidr = "172.30.3.0/24", az_index = 1}]`.
+  * (Optional) Can also provide an example value for variables in the `Example Text` field. The text set there will be displayed to the user as an example variable value when they are ordering the Catalog Item. This is useful when the variable is a more complex `HCL` string e.g. the value for the `private_subnet_cidrs` would be something like `[{cidr = "172.30.2.0/24", az_index = 0}, {cidr = "172.30.3.0/24", az_index = 1}]`.
 * Click on the `Submit` button to finish adding the variable.
   
-The following variables must be set:
+The following variables must be set by following the steps above:
 
 | Terraform Variable | ServiceNOW Variable Name | ServiceNow Variable Question |
 |--------------------|--------------------------|------------------------------|
@@ -149,7 +150,7 @@ The service now action in our case is essentially a JavaScript invocation. The J
 
   ![](images/snow-flowdesigner-copy-action-6.png)
 
-* Go to the `Script` section and add an Input Variable for each of the workspace variables and pass as value the appropriate Input defined in the `Inputs` section. To do that drag and dorp the appropriate input from the section on the right to the value field. Names of the `Input Variables` must be the same as the names in the Variable set - that is they must follow the naming convention defined in the Terraform Cloud [documentation](https://www.terraform.io/docs/cloud/integrations/service-now/developer-reference.html#terraform-variables-and-servicenow-variable-sets).
+* Go to the `Script` section and add an Input Variable for each of the workspace variables by using the `Create Variable` button. Pass as value the appropriate Input defined in the `Inputs` section. To do that drag and dorp the appropriate input from the section on the right to the value field. Names of the `Input Variables` must be the same as the names in the Variable set - that is they must follow the naming convention defined in the Terraform Cloud [documentation](https://www.terraform.io/docs/cloud/integrations/service-now/developer-reference.html#terraform-variables-and-servicenow-variable-sets).
   
   ![](images/snow-flowdesigner-copy-action-7.png)
 
@@ -171,7 +172,7 @@ To do this:
   
   ![](images/snow-flowdesigner-flow-1.png)
 
-* Copy the `Create Workspace with Var` flow in the same way you copied the action earlier. When done you should have the new flow opened like this:
+* Copy the `Create Workspace with Var` flow in the same way you copied the action earlier. You can name the new flow `Create Workspace AWS Basic Network` for example. When done you should have the new flow opened like this:
   
   ![](images/snow-flowdesigner-flow-2.png)
 
@@ -191,7 +192,7 @@ To do this:
 
 * Configure the action by dragging and dropping the items e.i. variables, request item, shown on the right to the appropriate value fields for the action inputs. Make sure that `queue_all_runs` is not ticked and that `auto_apply` is.
 
-  **Note:** To get to the `sc_req` input you will need to expand the `Requested Item Record` on the right and find the nested `Record` under it.
+  **Note:** To get to the `sc_req` input you will need to expand the `Requested Item Record` on the right and find the nested `Request` under it.
 
   ![](images/snow-flowdesigner-flow-6.png)
 
@@ -204,7 +205,7 @@ To do this:
   ![](images/snow-flowdesigner-flow-8.png)
 
 * Add another 5 seconds wait as a 5th step.
-* Save and Publish the Flow using the buttons on the top right. After this the flow overview should look like:
+* `Save` and then `Activate` the Flow using the buttons on the top right. After this the flow overview should look like:
 
   ![](images/snow-flowdesigner-flow-9.png)
 
@@ -230,7 +231,7 @@ At this point the Catalog Item `AWS Basic Network` should be fully configured an
 To test it make an order via the Service Catalog.
 
 * In ServiceNOW go to the `Service Catalog` > `Catalogs` and select the Terraform catalog. This catalog should have been added as part of installing and initial setup of the Terraform ServiceNOW application.
-* Select the Catalog Item that we added `Basic AWS Network`.
+* Inside the Terraform catalog select the Catalog Item that we added `Basic AWS Network`.
 * Fill out the variable values. 
   * Make sure to select the appropriate VCS repository if you have configured more than one.
   * For the type of the values needed for the Terraform variables please check the Terraform configuration on the repo or refer to the table and screenshot below.
@@ -253,3 +254,7 @@ To test it make an order via the Service Catalog.
 After ordering the Catalog Item, to determine whether the request was successful you should go to Terraform Cloud and check if a workspace was created, variables were set for it and a run was triggered.
 
 Even if the run itself fails it may be due to issues not related to the Terraform ServiceNOW application but for example due to providing invalid credentials.
+
+### Clean UP
+
+If a successful Terraform run was performed and resources were created in AWS do not forget to clean them up. You can do that by queueing a destroy run for the workspace directly in Terraform Cloud or can use the `Delete Workspace Flow` catalog item in ServiceNOW.
